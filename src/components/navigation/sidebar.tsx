@@ -13,6 +13,7 @@ import {
   ShoppingCart,
   Briefcase,
   FileText,
+  MapPin,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -22,6 +23,7 @@ interface SidebarProps {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'worker', 'viewer'] },
+  { name: 'Locations', href: '/locations', icon: MapPin, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Scan', href: '/scan', icon: ScanLine, roles: ['admin', 'manager', 'worker'] },
   { name: 'Jobs', href: '/jobs', icon: Briefcase, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Orders', href: '/orders', icon: ShoppingCart, roles: ['admin', 'manager', 'viewer'] },
