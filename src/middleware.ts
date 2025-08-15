@@ -1,57 +1,39 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  // Check authentication
-  const { data: { user } } = await supabase.auth.getUser()
+  // Get the pathname
+  const pathname = request.nextUrl.pathname
   
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') || 
-                     request.nextUrl.pathname.startsWith('/reset-password')
-  const isPublicPage = request.nextUrl.pathname === '/'
-  const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard') ||
-                          request.nextUrl.pathname.startsWith('/inventory') ||
-                          request.nextUrl.pathname.startsWith('/scan') ||
-                          request.nextUrl.pathname.startsWith('/profile') ||
-                          request.nextUrl.pathname.startsWith('/admin')
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/', '/login', '/reset-password', '/auth/callback']
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  
+  // Define auth routes that authenticated users shouldn't access
+  const authRoutes = ['/login', '/reset-password']
+  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+  
+  // Check for auth cookies (Supabase uses sb-access-token and sb-refresh-token)
+  const hasAuthCookie = request.cookies.has('sb-access-token') || 
+                       request.cookies.has('sb-refresh-token')
   
   // Redirect authenticated users away from auth pages
-  if (user && isAuthPage) {
+  if (hasAuthCookie && isAuthRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
   
+  // Allow access to public routes
+  if (isPublicRoute) {
+    return NextResponse.next()
+  }
+  
   // Redirect unauthenticated users to login
-  if (!user && isDashboardPage) {
+  if (!hasAuthCookie) {
     const redirectUrl = new URL('/login', request.url)
-    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    redirectUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(redirectUrl)
   }
   
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {
