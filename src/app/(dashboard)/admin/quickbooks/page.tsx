@@ -261,6 +261,9 @@ export default function QuickBooksPage() {
                 </Badge>
               </div>
               <div className="flex gap-2">
+                <Button variant="outline" onClick={() => router.push('/admin/quickbooks/test')}>
+                  Test Integration
+                </Button>
                 <Button variant="outline" onClick={() => router.push('/admin/quickbooks/customers')}>
                   Manage Customers
                 </Button>

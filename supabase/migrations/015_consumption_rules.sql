@@ -3,11 +3,7 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type TEXT
   CHECK (product_type IN ('raw_material', 'finished_good', 'component', 'packaging')) 
   DEFAULT 'raw_material';
 
--- Update inventory consumption to enforce business rules
-ALTER TABLE inventory_consumption ADD COLUMN IF NOT EXISTS shipment_id UUID;
-ALTER TABLE inventory_consumption ADD FOREIGN KEY (shipment_id) REFERENCES shipments(id);
-
--- Create shipments table if not exists
+-- Create shipments table first (before adding foreign key)
 CREATE TABLE IF NOT EXISTS shipments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   shipment_number TEXT UNIQUE NOT NULL, -- SHP-YYYYMMDD-###
@@ -105,6 +101,10 @@ CREATE TRIGGER trigger_set_shipment_number
   BEFORE INSERT ON shipments
   FOR EACH ROW
   EXECUTE FUNCTION set_shipment_number();
+
+-- Now add the foreign key to inventory_consumption after shipments table exists
+ALTER TABLE inventory_consumption ADD COLUMN IF NOT EXISTS shipment_id UUID;
+ALTER TABLE inventory_consumption ADD FOREIGN KEY (shipment_id) REFERENCES shipments(id);
 
 -- Updated consumption function with business rules
 CREATE OR REPLACE FUNCTION consume_inventory_with_rules(
