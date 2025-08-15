@@ -6,14 +6,32 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 // QuickBooks OAuth configuration
 export const QB_CONFIG = {
-  clientId: process.env.QUICKBOOKS_CLIENT_ID!,
-  clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET!,
+  clientId: process.env.QUICKBOOKS_CLIENT_ID || '',
+  clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET || '',
   redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 'http://localhost:3000/api/quickbooks/callback',
   scope: 'com.intuit.quickbooks.accounting',
   sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
   discoveryUrl: process.env.QUICKBOOKS_SANDBOX === 'true' 
     ? 'https://developer.api.intuit.com/.well-known/openid_sandbox_configuration'
     : 'https://developer.api.intuit.com/.well-known/openid_configuration'
+}
+
+// Validate configuration
+export function validateQBConfig(): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  if (!QB_CONFIG.clientId) {
+    errors.push('QUICKBOOKS_CLIENT_ID is not configured')
+  }
+  
+  if (!QB_CONFIG.clientSecret) {
+    errors.push('QUICKBOOKS_CLIENT_SECRET is not configured')
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors
+  }
 }
 
 // Get the base URL for QuickBooks API
