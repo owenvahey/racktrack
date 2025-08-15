@@ -20,7 +20,7 @@ import { Loader2 } from 'lucide-react'
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  remember: z.boolean().default(false),
+  remember: z.boolean(),
 })
 
 type FormData = z.infer<typeof formSchema>
