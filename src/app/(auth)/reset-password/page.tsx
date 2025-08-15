@@ -2,6 +2,9 @@ import { PasswordResetForm } from '@/components/auth/password-reset-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 
+// Force dynamic rendering to avoid build-time errors with Supabase
+export const dynamic = 'force-dynamic'
+
 export default function ResetPasswordPage() {
   return (
     <Card>
