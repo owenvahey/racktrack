@@ -15,6 +15,7 @@ import {
   FileText,
   MapPin,
   Factory,
+  Box,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -23,14 +24,16 @@ interface SidebarProps {
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, roles: ['admin', 'manager', 'worker', 'viewer'] },
+  { name: 'Products', href: '/products', icon: Box, roles: ['admin', 'manager', 'viewer'] },
   { name: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Locations', href: '/locations', icon: MapPin, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Scan', href: '/scan', icon: ScanLine, roles: ['admin', 'manager', 'worker'] },
   { name: 'Production', href: '/production', icon: Factory, roles: ['admin', 'manager', 'worker'] },
   { name: 'Jobs', href: '/jobs', icon: Briefcase, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Orders', href: '/orders', icon: ShoppingCart, roles: ['admin', 'manager', 'viewer'] },
+  { name: 'Customer POs', href: '/customer-pos', icon: FileText, roles: ['admin', 'manager', 'viewer'] },
   { name: 'Customers', href: '/customers', icon: Users, roles: ['admin', 'manager', 'viewer'] },
-  { name: 'Reports', href: '/reports', icon: FileText, roles: ['admin', 'manager'] },
+  { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['admin', 'manager'] },
   { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin'] },
 ]
 
