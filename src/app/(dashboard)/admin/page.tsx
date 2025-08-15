@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Package, Building2, Activity } from 'lucide-react'
+import { Users, Package, Building2, Activity, DollarSign } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminPage() {
@@ -104,10 +104,15 @@ export default async function AdminPage() {
               <p className="font-medium">Warehouse Settings</p>
               <p className="text-sm text-muted-foreground">Configure warehouse locations</p>
             </button>
-            <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
-              <p className="font-medium">System Configuration</p>
-              <p className="text-sm text-muted-foreground">Update system settings</p>
-            </button>
+            <Link href="/admin/quickbooks" className="block">
+              <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
+                <p className="font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  QuickBooks Integration
+                </p>
+                <p className="text-sm text-muted-foreground">Connect and sync with QuickBooks</p>
+              </button>
+            </Link>
             <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
               <p className="font-medium">Backup & Export</p>
               <p className="text-sm text-muted-foreground">Export data and create backups</p>
