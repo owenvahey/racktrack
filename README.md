@@ -62,7 +62,7 @@ A modern Warehouse Management System built for screen printing companies, featur
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/ovahey/racktrack.git
+git clone https://github.com/owenvahey/racktrack.git
 cd racktrack
 ```
 
@@ -157,7 +157,7 @@ racktrack/
 3. Add environment variables in Vercel dashboard
 4. Deploy
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ovahey/racktrack)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/owenvahey/racktrack)
 
 ## 🧪 Development Scripts
 
