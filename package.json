@@ -10,7 +10,10 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "create-admin": "node scripts/create-admin.js",
-    "setup": "node scripts/create-admin.js"
+    "setup": "node scripts/create-admin.js",
+    "fix-user": "node scripts/fix-user-profile.js",
+    "list-users": "node scripts/list-users.js",
+    "cleanup": "node scripts/cleanup-orphaned.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -28,6 +31,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "html5-qrcode": "^2.3.8",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",

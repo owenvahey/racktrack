@@ -76,9 +76,42 @@ async function createAdminUser() {
     if (profileError) {
       console.error('❌ Error creating profile:', profileError.message)
       
-      // Clean up auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id)
-      process.exit(1)
+      // Check if it's a duplicate key error
+      if (profileError.message.includes('duplicate key')) {
+        console.log('\n⚠️  A profile with this ID already exists.')
+        console.log('This might be an orphaned profile from a deleted user.')
+        console.log('\nTrying to update the existing profile...')
+        
+        // Try to update the existing profile
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            email,
+            full_name: fullName,
+            role: 'admin',
+            warehouse_id: warehouseId || null,
+            is_active: true,
+          })
+          .eq('id', authData.user.id)
+          
+        if (updateError) {
+          console.error('❌ Error updating profile:', updateError.message)
+          // Clean up auth user if we can't fix the profile
+          await supabase.auth.admin.deleteUser(authData.user.id)
+          process.exit(1)
+        } else {
+          console.log('✅ Existing profile updated successfully!')
+          console.log('\nYou can now log in with:')
+          console.log(`Email: ${email}`)
+          console.log(`Password: ${password}`)
+          readline.close()
+          return
+        }
+      } else {
+        // Clean up auth user if profile creation fails for other reasons
+        await supabase.auth.admin.deleteUser(authData.user.id)
+        process.exit(1)
+      }
     }
 
     console.log('✅ Admin profile created successfully!')
