@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -16,9 +16,20 @@ import {
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
+interface TestResult {
+  success: boolean
+  data?: any
+  error?: string
+}
+
+interface TestResults {
+  customers?: TestResult
+  items?: TestResult
+}
+
 export default function QuickBooksTestPage() {
   const [loading, setLoading] = useState<string | null>(null)
-  const [results, setResults] = useState<any>({})
+  const [results, setResults] = useState<TestResults>({})
 
   async function testCustomerSync() {
     setLoading('customers')
@@ -288,9 +299,9 @@ function CustomersList() {
   const [customers, setCustomers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useState(() => {
+  useEffect(() => {
     fetchCustomers()
-  })
+  }, [])
 
   async function fetchCustomers() {
     try {
@@ -350,9 +361,9 @@ function ItemsList() {
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useState(() => {
+  useEffect(() => {
     fetchItems()
-  })
+  }, [])
 
   async function fetchItems() {
     try {
