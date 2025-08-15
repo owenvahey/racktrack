@@ -121,7 +121,9 @@ export default function ProductionCompletePage() {
             id,
             name,
             sku,
-            unit_of_measure
+            unit_of_measure,
+            units_per_case,
+            product_type
           )
         `)
         .eq('job_id', routeData.job_id)
@@ -139,16 +141,17 @@ export default function ProductionCompletePage() {
       }))
       setMaterialInputs(inputs)
 
-      // Fetch available inventory for materials
+      // Fetch available pallet contents for materials
       if (materialsData && materialsData.length > 0) {
         const productIds = materialsData.map(m => m.material_product_id)
-        const { data: inventoryData } = await supabase
-          .from('inventory')
+        const { data: palletContents } = await supabase
+          .from('pallet_contents')
           .select(`
             *,
             product:products (
               name,
-              sku
+              sku,
+              units_per_case
             ),
             pallet:pallets (
               pallet_number,
@@ -158,10 +161,10 @@ export default function ProductionCompletePage() {
             )
           `)
           .in('product_id', productIds)
-          .gt('available_quantity', 0)
+          .gt('total_units_remaining', 0)
           .order('lot_number')
 
-        setAvailableInventory(inventoryData || [])
+        setAvailableInventory(palletContents || [])
       }
 
     } catch (error) {
@@ -196,36 +199,39 @@ export default function ProductionCompletePage() {
 
       if (routeError) throw routeError
 
-      // Log material consumption
+      // Prepare material consumptions for new system
+      const materialConsumptions = []
+      
       for (const input of materialInputs) {
-        if (input.quantity_consumed > 0) {
-          const { error: consumeError } = await supabase
-            .from('job_material_consumption')
-            .update({
-              quantity_consumed: input.quantity_consumed,
-              lot_number: input.lot_number,
-              consumed_at: new Date().toISOString(),
-              consumed_by: (await supabase.auth.getUser()).data.user?.id,
-              inventory_id: input.inventory_id
-            })
-            .eq('job_id', route.job_id)
-            .eq('material_product_id', input.material_product_id)
-            .is('consumed_at', null)
+        if (input.quantity_consumed > 0 && input.inventory_id) {
+          // Convert total units to cases and units
+          const unitsPerCase = availableInventory.find(inv => inv.id === input.inventory_id)?.units_per_case || 1
+          const cases = Math.floor(input.quantity_consumed / unitsPerCase)
+          const units = input.quantity_consumed % unitsPerCase
+          
+          materialConsumptions.push({
+            pallet_content_id: input.inventory_id,
+            cases: cases,
+            units: units,
+            notes: input.lot_number ? `Lot: ${input.lot_number}` : null
+          })
+        }
+      }
 
-          if (consumeError) throw consumeError
-
-          // Update inventory if specified
-          if (input.inventory_id) {
-            const { error: invError } = await supabase.rpc(
-              'update_inventory_quantity',
-              {
-                p_inventory_id: input.inventory_id,
-                p_quantity_change: -input.quantity_consumed,
-                p_movement_type: 'consume'
-              }
-            )
-            if (invError) throw invError
+      // Consume materials using the new function
+      if (materialConsumptions.length > 0) {
+        const { data: consumeResult, error: consumeError } = await supabase.rpc(
+          'consume_job_materials',
+          {
+            p_job_route_id: routeId,
+            p_material_consumptions: materialConsumptions
           }
+        )
+
+        if (consumeError) throw consumeError
+        
+        if (consumeResult && !consumeResult.success) {
+          throw new Error(`Material consumption failed: ${consumeResult.error_messages?.join(', ')}`)
         }
       }
 
@@ -446,14 +452,22 @@ export default function ProductionCompletePage() {
                       >
                         <option value="">Select inventory</option>
                         {availableInventory
-                          .filter(inv => inv.product_id === material.material_product_id)
-                          .map(inv => (
-                            <option key={inv.id} value={inv.id}>
-                              Lot: {inv.lot_number} - Qty: {inv.available_quantity}
-                              {inv.pallet?.current_location?.code && 
-                                ` - ${inv.pallet.current_location.code}`}
-                            </option>
-                          ))}
+                          .filter(pc => pc.product_id === material.material_product_id)
+                          .map(pc => {
+                            const displayQty = pc.cases_remaining > 0 && pc.loose_units_remaining > 0
+                              ? `${pc.cases_remaining} cases + ${pc.loose_units_remaining} units`
+                              : pc.cases_remaining > 0
+                              ? `${pc.cases_remaining} cases`
+                              : `${pc.loose_units_remaining} units`
+                            
+                            return (
+                              <option key={pc.id} value={pc.id}>
+                                Lot: {pc.lot_number || 'N/A'} - {displayQty} ({pc.total_units_remaining} total)
+                                {pc.pallet?.current_location?.code && 
+                                  ` - ${pc.pallet.current_location.code}`}
+                              </option>
+                            )
+                          })}
                       </select>
                     </div>
                   </div>
