@@ -29,6 +29,7 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import type { Product } from '@/types/inventory.types'
 
+// Keep all fields as strings in the form
 const formSchema = z.object({
   sku: z.string().min(1, 'SKU is required').max(50),
   name: z.string().min(1, 'Product name is required').max(200),
@@ -36,29 +37,15 @@ const formSchema = z.object({
   category: z.string().optional(),
   subcategory: z.string().optional(),
   unit_of_measure: z.string().min(1, 'Unit of measure is required'),
-  weight_per_unit: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
-  cost_per_unit: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
-  sell_price: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
+  weight_per_unit: z.string().optional(),
+  cost_per_unit: z.string().optional(),
+  sell_price: z.string().optional(),
   barcode: z.string().optional(),
-  min_stock_level: z.string().transform(val => Number(val) || 0),
-  max_stock_level: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
+  min_stock_level: z.string(),
+  max_stock_level: z.string().optional(),
 })
 
-// Define the form data type explicitly to match what the form expects
-type FormData = {
-  sku: string
-  name: string
-  description?: string
-  category?: string
-  subcategory?: string
-  unit_of_measure: string
-  weight_per_unit?: number
-  cost_per_unit?: number
-  sell_price?: number
-  barcode?: string
-  min_stock_level: number
-  max_stock_level?: number
-}
+type FormData = z.infer<typeof formSchema>
 
 interface ProductFormProps {
   product?: Product
@@ -91,7 +78,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  const form = useForm({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       sku: product?.sku || '',
@@ -113,12 +100,28 @@ export function ProductForm({ product }: ProductFormProps) {
     setIsLoading(true)
 
     try {
+      // Convert string fields to appropriate types
+      const productData = {
+        sku: data.sku,
+        name: data.name,
+        description: data.description || null,
+        category: data.category || null,
+        subcategory: data.subcategory || null,
+        unit_of_measure: data.unit_of_measure,
+        weight_per_unit: data.weight_per_unit ? parseFloat(data.weight_per_unit) : null,
+        cost_per_unit: data.cost_per_unit ? parseFloat(data.cost_per_unit) : null,
+        sell_price: data.sell_price ? parseFloat(data.sell_price) : null,
+        barcode: data.barcode || null,
+        min_stock_level: parseInt(data.min_stock_level) || 0,
+        max_stock_level: data.max_stock_level ? parseInt(data.max_stock_level) : null,
+      }
+
       if (product) {
         // Update existing product
         const { error } = await supabase
           .from('products')
           .update({
-            ...data,
+            ...productData,
             updated_at: new Date().toISOString(),
           })
           .eq('id', product.id)
@@ -129,7 +132,7 @@ export function ProductForm({ product }: ProductFormProps) {
         // Create new product
         const { error } = await supabase
           .from('products')
-          .insert([data])
+          .insert([productData])
 
         if (error) throw error
         toast.success('Product created successfully')

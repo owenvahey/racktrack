@@ -33,27 +33,16 @@ import { useQuery } from '@tanstack/react-query'
 const formSchema = z.object({
   product_id: z.string().min(1, 'Product is required'),
   pallet_id: z.string().optional(),
-  quantity: z.string().transform(val => Number(val) || 1).refine(val => val >= 1, 'Quantity must be at least 1'),
+  quantity: z.string().refine(val => parseInt(val) >= 1, 'Quantity must be at least 1'),
   lot_number: z.string().optional(),
   batch_number: z.string().optional(),
-  unit_cost: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
+  unit_cost: z.string().optional(),
   expiration_date: z.string().optional(),
   quality_status: z.enum(['pending', 'approved', 'rejected', 'quarantine']),
   notes: z.string().optional(),
 })
 
-// Define the form data type explicitly
-type FormData = {
-  product_id: string
-  pallet_id?: string
-  quantity: number
-  lot_number?: string
-  batch_number?: string
-  unit_cost?: number
-  expiration_date?: string
-  quality_status: 'pending' | 'approved' | 'rejected' | 'quarantine'
-  notes?: string
-}
+type FormData = z.infer<typeof formSchema>
 
 interface ReceiveFormProps {
   preselectedProduct?: Product | null
@@ -92,7 +81,7 @@ export function ReceiveForm({ preselectedProduct, onComplete }: ReceiveFormProps
     },
   })
 
-  const form = useForm({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       product_id: preselectedProduct?.id || '',
@@ -149,10 +138,10 @@ export function ReceiveForm({ preselectedProduct, onComplete }: ReceiveFormProps
         .insert({
           product_id: data.product_id,
           pallet_id: palletId,
-          quantity: data.quantity,
+          quantity: parseInt(data.quantity),
           lot_number: data.lot_number || null,
           batch_number: data.batch_number || null,
-          unit_cost: data.unit_cost || null,
+          unit_cost: data.unit_cost ? parseFloat(data.unit_cost) : null,
           expiration_date: data.expiration_date || null,
           quality_status: data.quality_status,
           received_date: new Date().toISOString(),
@@ -170,8 +159,8 @@ export function ReceiveForm({ preselectedProduct, onComplete }: ReceiveFormProps
           pallet_id: palletId,
           movement_type: 'receive',
           quantity_before: 0,
-          quantity_change: data.quantity,
-          quantity_after: data.quantity,
+          quantity_change: parseInt(data.quantity),
+          quantity_after: parseInt(data.quantity),
           performed_by: user.id,
           notes: data.notes || null,
           reason: 'Initial receipt',
