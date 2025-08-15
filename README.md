@@ -83,11 +83,16 @@ cp .env.local.example .env.local
 Update `.env.local` with your Supabase credentials:
 
 ```env
+# Public variables (safe for browser)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Server-side only (NEVER expose to browser)
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
+
+⚠️ **Important**: Never prefix `SUPABASE_SERVICE_ROLE_KEY` with `NEXT_PUBLIC_`. This key has admin privileges and must only be used server-side.
 
 ### 4. Set up Supabase
 
