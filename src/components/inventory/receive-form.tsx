@@ -33,16 +33,27 @@ import { useQuery } from '@tanstack/react-query'
 const formSchema = z.object({
   product_id: z.string().min(1, 'Product is required'),
   pallet_id: z.string().optional(),
-  quantity: z.union([z.string(), z.number()]).transform(val => Number(val)).pipe(z.number().min(1, 'Quantity must be at least 1')),
+  quantity: z.string().transform(val => Number(val) || 1).refine(val => val >= 1, 'Quantity must be at least 1'),
   lot_number: z.string().optional(),
   batch_number: z.string().optional(),
-  unit_cost: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
+  unit_cost: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
   expiration_date: z.string().optional(),
   quality_status: z.enum(['pending', 'approved', 'rejected', 'quarantine']),
   notes: z.string().optional(),
 })
 
-type FormData = z.infer<typeof formSchema>
+// Define the form data type explicitly
+type FormData = {
+  product_id: string
+  pallet_id?: string
+  quantity: number
+  lot_number?: string
+  batch_number?: string
+  unit_cost?: number
+  expiration_date?: string
+  quality_status: 'pending' | 'approved' | 'rejected' | 'quarantine'
+  notes?: string
+}
 
 interface ReceiveFormProps {
   preselectedProduct?: Product | null
@@ -81,17 +92,17 @@ export function ReceiveForm({ preselectedProduct, onComplete }: ReceiveFormProps
     },
   })
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       product_id: preselectedProduct?.id || '',
       pallet_id: '',
-      quantity: 1,
+      quantity: '1',
       lot_number: '',
       batch_number: '',
-      unit_cost: undefined,
+      unit_cost: '',
       expiration_date: '',
-      quality_status: 'pending',
+      quality_status: 'pending' as const,
       notes: '',
     },
   })
@@ -101,7 +112,7 @@ export function ReceiveForm({ preselectedProduct, onComplete }: ReceiveFormProps
     if (preselectedProduct) {
       form.setValue('product_id', preselectedProduct.id)
       if (preselectedProduct.cost_per_unit) {
-        form.setValue('unit_cost', Number(preselectedProduct.cost_per_unit))
+        form.setValue('unit_cost', preselectedProduct.cost_per_unit.toString())
       }
     }
   }, [preselectedProduct, form])

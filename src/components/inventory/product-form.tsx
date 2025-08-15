@@ -36,15 +36,29 @@ const formSchema = z.object({
   category: z.string().optional(),
   subcategory: z.string().optional(),
   unit_of_measure: z.string().min(1, 'Unit of measure is required'),
-  weight_per_unit: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
-  cost_per_unit: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
-  sell_price: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
+  weight_per_unit: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
+  cost_per_unit: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
+  sell_price: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
   barcode: z.string().optional(),
-  min_stock_level: z.union([z.string(), z.number()]).transform(val => Number(val)).pipe(z.number().min(0)),
-  max_stock_level: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
+  min_stock_level: z.string().transform(val => Number(val) || 0),
+  max_stock_level: z.string().transform(val => val === '' ? undefined : Number(val)).optional(),
 })
 
-type FormData = z.infer<typeof formSchema>
+// Define the form data type explicitly to match what the form expects
+type FormData = {
+  sku: string
+  name: string
+  description?: string
+  category?: string
+  subcategory?: string
+  unit_of_measure: string
+  weight_per_unit?: number
+  cost_per_unit?: number
+  sell_price?: number
+  barcode?: string
+  min_stock_level: number
+  max_stock_level?: number
+}
 
 interface ProductFormProps {
   product?: Product
@@ -77,7 +91,7 @@ export function ProductForm({ product }: ProductFormProps) {
   const router = useRouter()
   const supabase = createClient()
 
-  const form = useForm<FormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       sku: product?.sku || '',
@@ -86,12 +100,12 @@ export function ProductForm({ product }: ProductFormProps) {
       category: product?.category || '',
       subcategory: product?.subcategory || '',
       unit_of_measure: product?.unit_of_measure || 'each',
-      weight_per_unit: product?.weight_per_unit || undefined,
-      cost_per_unit: product?.cost_per_unit || undefined,
-      sell_price: product?.sell_price || undefined,
+      weight_per_unit: product?.weight_per_unit?.toString() || '',
+      cost_per_unit: product?.cost_per_unit?.toString() || '',
+      sell_price: product?.sell_price?.toString() || '',
       barcode: product?.barcode || '',
-      min_stock_level: product?.min_stock_level || 0,
-      max_stock_level: product?.max_stock_level || undefined,
+      min_stock_level: product?.min_stock_level?.toString() || '0',
+      max_stock_level: product?.max_stock_level?.toString() || '',
     },
   })
 
