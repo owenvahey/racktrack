@@ -24,6 +24,7 @@ export default function QuickBooksPage() {
   // Check for OAuth callback parameters
   const success = searchParams.get('success')
   const error = searchParams.get('error')
+  const errorDetails = searchParams.get('details')
 
   useEffect(() => {
     fetchConnection()
@@ -130,6 +131,17 @@ export default function QuickBooksPage() {
             {error === 'update_failed' && 'Failed to update QuickBooks connection'}
             {error === 'create_failed' && 'Failed to create QuickBooks connection'}
             {error === 'callback_error' && 'An error occurred during QuickBooks callback'}
+            {error === 'config_error' && (
+              <div>
+                <p className="font-medium">QuickBooks configuration error:</p>
+                <p className="text-sm mt-1">{errorDetails || 'Missing required configuration'}</p>
+                <p className="text-sm mt-2">Please add the following environment variables to Vercel:</p>
+                <ul className="text-sm mt-1 list-disc list-inside">
+                  <li>QUICKBOOKS_CLIENT_ID</li>
+                  <li>QUICKBOOKS_CLIENT_SECRET</li>
+                </ul>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}

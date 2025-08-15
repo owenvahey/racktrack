@@ -6,9 +6,9 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 // QuickBooks OAuth configuration
 export const QB_CONFIG = {
-  clientId: process.env.QUICKBOOKS_CLIENT_ID || '',
-  clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET || '',
-  redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 
+  clientId: process.env.QB_CLIENT_ID || process.env.QUICKBOOKS_CLIENT_ID || '',
+  clientSecret: process.env.QB_CLIENT_SECRET || process.env.QUICKBOOKS_CLIENT_SECRET || '',
+  redirectUri: process.env.QB_REDIRECT_URI || process.env.QUICKBOOKS_REDIRECT_URI || 
     (process.env.VERCEL_URL 
       ? `https://${process.env.VERCEL_URL}/api/quickbooks/callback`
       : 'http://localhost:3000/api/quickbooks/callback'),

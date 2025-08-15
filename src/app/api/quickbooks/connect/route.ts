@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getAuthorizationUrl } from '@/lib/quickbooks'
+import { getAuthorizationUrl, validateQBConfig } from '@/lib/quickbooks'
 import { Database } from '@/types/database.types'
 
 export async function GET(request: NextRequest) {
   try {
+    // Validate QuickBooks configuration first
+    const configValidation = validateQBConfig()
+    if (!configValidation.valid) {
+      console.error('QuickBooks configuration errors:', configValidation.errors)
+      return NextResponse.redirect(
+        `/admin/quickbooks?error=config_error&details=${encodeURIComponent(configValidation.errors.join(', '))}`
+      )
+    }
+
     // Verify user is authenticated
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
