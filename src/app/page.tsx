@@ -49,7 +49,7 @@ export default function Home() {
         </div>
 
         <div className="flex justify-center gap-4">
-          <Link href="/auth/login">
+          <Link href="/login">
             <Button size="lg" className="text-lg px-8">
               Get Started
             </Button>
