@@ -10,21 +10,33 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
   
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
   
-  if (!user) {
+  if (userError || !user) {
+    console.error('Auth error in dashboard layout:', userError)
     redirect('/login')
   }
 
   // Fetch user profile
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (!profile) {
-    redirect('/login')
+  if (profileError || !profile) {
+    console.error('Profile error in dashboard layout:', profileError)
+    // Instead of redirecting, show an error page
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Profile Error</h1>
+          <p className="text-gray-600 mb-4">Unable to load your profile. Please try logging out and back in.</p>
+          <p className="text-sm text-gray-500">User ID: {user.id}</p>
+          <p className="text-sm text-gray-500">Error: {profileError?.message || 'Profile not found'}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
