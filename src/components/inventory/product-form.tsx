@@ -36,12 +36,12 @@ const formSchema = z.object({
   category: z.string().optional(),
   subcategory: z.string().optional(),
   unit_of_measure: z.string().min(1, 'Unit of measure is required'),
-  weight_per_unit: z.coerce.number().optional(),
-  cost_per_unit: z.coerce.number().optional(),
-  sell_price: z.coerce.number().optional(),
+  weight_per_unit: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
+  cost_per_unit: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
+  sell_price: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
   barcode: z.string().optional(),
-  min_stock_level: z.coerce.number().min(0).default(0),
-  max_stock_level: z.coerce.number().optional(),
+  min_stock_level: z.union([z.string(), z.number()]).transform(val => Number(val)).pipe(z.number().min(0)),
+  max_stock_level: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
 })
 
 type FormData = z.infer<typeof formSchema>

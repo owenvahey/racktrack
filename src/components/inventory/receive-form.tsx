@@ -33,12 +33,12 @@ import { useQuery } from '@tanstack/react-query'
 const formSchema = z.object({
   product_id: z.string().min(1, 'Product is required'),
   pallet_id: z.string().optional(),
-  quantity: z.coerce.number().min(1, 'Quantity must be at least 1'),
+  quantity: z.union([z.string(), z.number()]).transform(val => Number(val)).pipe(z.number().min(1, 'Quantity must be at least 1')),
   lot_number: z.string().optional(),
   batch_number: z.string().optional(),
-  unit_cost: z.coerce.number().optional(),
+  unit_cost: z.union([z.string(), z.number()]).transform(val => val === '' ? undefined : Number(val)).optional(),
   expiration_date: z.string().optional(),
-  quality_status: z.enum(['pending', 'approved', 'rejected', 'quarantine']).default('pending'),
+  quality_status: z.enum(['pending', 'approved', 'rejected', 'quarantine']),
   notes: z.string().optional(),
 })
 
