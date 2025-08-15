@@ -3,6 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Package, Users, BarChart3, ScanLine } from 'lucide-react'
 import Link from 'next/link'
 
+// Force dynamic rendering to prevent any static generation issues
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
