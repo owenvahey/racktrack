@@ -14,6 +14,7 @@ import {
   Briefcase,
   FileText,
   MapPin,
+  Factory,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Inventory', href: '/inventory', icon: Package, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Locations', href: '/locations', icon: MapPin, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Scan', href: '/scan', icon: ScanLine, roles: ['admin', 'manager', 'worker'] },
+  { name: 'Production', href: '/production', icon: Factory, roles: ['admin', 'manager', 'worker'] },
   { name: 'Jobs', href: '/jobs', icon: Briefcase, roles: ['admin', 'manager', 'worker', 'viewer'] },
   { name: 'Orders', href: '/orders', icon: ShoppingCart, roles: ['admin', 'manager', 'viewer'] },
   { name: 'Customers', href: '/customers', icon: Users, roles: ['admin', 'manager', 'viewer'] },
