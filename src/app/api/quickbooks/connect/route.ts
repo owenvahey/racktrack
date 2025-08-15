@@ -36,6 +36,16 @@ export async function GET(request: NextRequest) {
     // Generate state parameter for CSRF protection
     const state = crypto.randomUUID()
     
+    // Log the redirect URI for debugging
+    console.log('QuickBooks Connect - Redirect URI:', process.env.QB_REDIRECT_URI || process.env.QUICKBOOKS_REDIRECT_URI || 'not set')
+    console.log('QuickBooks Connect - All QB env vars:', {
+      QB_CLIENT_ID: process.env.QB_CLIENT_ID ? 'set' : 'not set',
+      QB_CLIENT_SECRET: process.env.QB_CLIENT_SECRET ? 'set' : 'not set',
+      QB_REDIRECT_URI: process.env.QB_REDIRECT_URI || 'not set',
+      VERCEL_URL: process.env.VERCEL_URL || 'not set',
+      VERCEL_ENV: process.env.VERCEL_ENV || 'not set'
+    })
+    
     // Store state in cookies for verification
     const response = NextResponse.redirect(getAuthorizationUrl(state))
     response.cookies.set('qb_oauth_state', state, {
