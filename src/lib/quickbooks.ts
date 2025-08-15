@@ -9,9 +9,11 @@ export const QB_CONFIG = {
   clientId: process.env.QB_CLIENT_ID || process.env.QUICKBOOKS_CLIENT_ID || '',
   clientSecret: process.env.QB_CLIENT_SECRET || process.env.QUICKBOOKS_CLIENT_SECRET || '',
   redirectUri: process.env.QB_REDIRECT_URI || process.env.QUICKBOOKS_REDIRECT_URI || 
-    (process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}/api/quickbooks/callback`
-      : 'http://localhost:3000/api/quickbooks/callback'),
+    (process.env.VERCEL_ENV === 'production' 
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL || 'racktrack.vercel.app'}/api/quickbooks/callback`
+      : process.env.VERCEL_URL 
+        ? `https://${process.env.VERCEL_URL}/api/quickbooks/callback`
+        : 'http://localhost:3000/api/quickbooks/callback'),
   scope: 'com.intuit.quickbooks.accounting',
   sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
   discoveryUrl: process.env.QUICKBOOKS_SANDBOX === 'true' 
@@ -57,6 +59,10 @@ export function getAuthorizationUrl(state: string): string {
   const authEndpoint = QB_CONFIG.sandbox
     ? 'https://appcenter.intuit.com/connect/oauth2'
     : 'https://appcenter.intuit.com/connect/oauth2'
+
+  // Log the redirect URI being used (helpful for debugging)
+  console.log('QuickBooks redirect URI:', QB_CONFIG.redirectUri)
+  console.log('Full auth URL:', `${authEndpoint}?${params.toString()}`)
 
   return `${authEndpoint}?${params.toString()}`
 }
