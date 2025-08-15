@@ -33,7 +33,10 @@ export function useAuth() {
       }
 
       toast.success('Welcome back!')
-      router.push('/dashboard')
+      
+      // Force a hard redirect
+      window.location.href = '/dashboard'
+      
       return { error: null }
     } catch (error) {
       console.error('Sign in error:', error)
