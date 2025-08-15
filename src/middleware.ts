@@ -5,16 +5,18 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
   // Define public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/reset-password', '/auth/callback']
+  const publicRoutes = ['/', '/login', '/reset-password', '/auth/callback', '/test-auth']
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
   
   // Define auth routes that authenticated users shouldn't access
   const authRoutes = ['/login', '/reset-password']
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
   
-  // Check for auth cookies (Supabase uses sb-access-token and sb-refresh-token)
-  const hasAuthCookie = request.cookies.has('sb-access-token') || 
-                       request.cookies.has('sb-refresh-token')
+  // Check for auth cookies (Supabase uses project-specific cookie names)
+  const cookies = request.cookies.getAll()
+  const hasAuthCookie = cookies.some(cookie => 
+    cookie.name.includes('sb-') && cookie.name.includes('-auth-token')
+  )
   
   // Redirect authenticated users away from auth pages
   if (hasAuthCookie && isAuthRoute) {
