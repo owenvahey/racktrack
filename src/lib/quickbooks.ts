@@ -8,7 +8,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const QB_CONFIG = {
   clientId: process.env.QUICKBOOKS_CLIENT_ID || '',
   clientSecret: process.env.QUICKBOOKS_CLIENT_SECRET || '',
-  redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 'http://localhost:3000/api/quickbooks/callback',
+  redirectUri: process.env.QUICKBOOKS_REDIRECT_URI || 
+    (process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}/api/quickbooks/callback`
+      : 'http://localhost:3000/api/quickbooks/callback'),
   scope: 'com.intuit.quickbooks.accounting',
   sandbox: process.env.QUICKBOOKS_SANDBOX === 'true',
   discoveryUrl: process.env.QUICKBOOKS_SANDBOX === 'true' 
