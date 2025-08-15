@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Package, Building2, Activity, DollarSign } from 'lucide-react'
+import { Users, Package, Building2, Activity, DollarSign, Factory } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AdminPage() {
@@ -100,10 +100,15 @@ export default async function AdminPage() {
                 <p className="text-sm text-muted-foreground">Add, edit, or remove users</p>
               </button>
             </Link>
-            <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
-              <p className="font-medium">Warehouse Settings</p>
-              <p className="text-sm text-muted-foreground">Configure warehouse locations</p>
-            </button>
+            <Link href="/admin/work-centers" className="block">
+              <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
+                <p className="font-medium flex items-center gap-2">
+                  <Factory className="h-4 w-4" />
+                  Production Management
+                </p>
+                <p className="text-sm text-muted-foreground">Work centers, activities, and BOMs</p>
+              </button>
+            </Link>
             <Link href="/admin/quickbooks" className="block">
               <button className="w-full text-left p-3 hover:bg-gray-100 rounded-lg transition-colors">
                 <p className="font-medium flex items-center gap-2">
