@@ -173,6 +173,80 @@ export interface JobRouteWithDetails extends JobRoute {
   material_consumption?: JobMaterialConsumption[]
 }
 
+// Production Issue Types
+
+export interface ProductionIssue {
+  id: string
+  job_route_id?: string
+  job_id?: string
+  issue_type: 'raw_material' | 'process' | 'equipment' | 'other'
+  severity?: 'low' | 'medium' | 'high' | 'critical'
+  status: 'open' | 'investigating' | 'resolved' | 'closed'
+  
+  // Issue details
+  title: string
+  description?: string
+  root_cause?: string
+  resolution?: string
+  
+  // Material tracking
+  material_product_id?: string
+  lot_number?: string
+  supplier_info?: string
+  
+  // Process tracking
+  work_center_id?: string
+  activity_id?: string
+  operator_id?: string
+  
+  // Metrics
+  quantity_affected?: number
+  downtime_minutes?: number
+  cost_impact?: number
+  
+  // Timestamps
+  reported_by?: string
+  reported_at: string
+  resolved_by?: string
+  resolved_at?: string
+  created_at: string
+  updated_at: string
+  
+  // Relations
+  job_route?: JobRoute
+  job?: any
+  material_product?: any
+  work_center?: WorkCenter
+  activity?: Activity
+  operator?: any
+  reporter?: any
+  resolver?: any
+  attachments?: IssueAttachment[]
+  comments?: IssueComment[]
+}
+
+export interface IssueAttachment {
+  id: string
+  issue_id: string
+  file_url: string
+  file_name?: string
+  file_type?: string
+  uploaded_by?: string
+  created_at: string
+  // Relations
+  uploader?: any
+}
+
+export interface IssueComment {
+  id: string
+  issue_id: string
+  comment: string
+  created_by?: string
+  created_at: string
+  // Relations
+  creator?: any
+}
+
 // Form types
 
 export interface CreateBOMInput {

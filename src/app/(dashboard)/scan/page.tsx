@@ -6,9 +6,11 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Package, MapPin, Loader2 } from 'lucide-react'
+import { Package, MapPin, Loader2, Factory, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function ScanPage() {
+  const router = useRouter()
   const [isScanning, setIsScanning] = useState(true)
   const [scanResult, setScanResult] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -81,8 +83,23 @@ export default function ScanPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Scan Items</h1>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Scan Items</h1>
+          <p className="text-muted-foreground mt-2">
+            Scan inventory items or access production scanning
+          </p>
+        </div>
+        <Button 
+          variant="outline"
+          onClick={() => router.push('/production/scan')}
+        >
+          <Factory className="mr-2 h-4 w-4" />
+          Production Scanner
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>

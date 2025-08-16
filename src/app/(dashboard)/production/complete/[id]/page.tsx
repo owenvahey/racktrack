@@ -18,7 +18,8 @@ import {
   AlertCircle,
   Loader2,
   Plus,
-  Trash2
+  Trash2,
+  AlertTriangle
 } from 'lucide-react'
 
 interface RouteDetails extends Omit<JobRoute, 'activity' | 'work_center'> {
@@ -294,20 +295,29 @@ export default function ProductionCompletePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Complete Production</h1>
-          <p className="text-muted-foreground mt-1">
-            {route.job.job_number} - {route.activity.name}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Complete Production</h1>
+            <p className="text-muted-foreground mt-1">
+              {route.job.job_number} - {route.activity.name}
+            </p>
+          </div>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/production/issues/new?jobRouteId=${routeId}&jobId=${route.job_id}`)}
+        >
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Report Issue
+        </Button>
       </div>
 
       {error && (

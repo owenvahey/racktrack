@@ -18,7 +18,8 @@ import {
   CheckCircle,
   AlertCircle,
   ScanLine,
-  Loader2
+  Loader2,
+  AlertTriangle
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
@@ -302,11 +303,19 @@ export default function ProductionPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Production Floor</h1>
-        <p className="text-muted-foreground mt-2">
-          Track and manage production activities
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">Production Floor</h1>
+          <p className="text-muted-foreground mt-2">
+            Track and manage production activities
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/production/issues')}>
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            View Issues
+          </Button>
+        </div>
       </div>
 
       {/* Work Center Selector */}
