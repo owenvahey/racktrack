@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { createClient } from '@/lib/supabase/client'
 import { useQuery } from '@tanstack/react-query'
-import { Warehouse, MapPin, Package2, AlertCircle, Plus, BarChart3 } from 'lucide-react'
+import { Warehouse, MapPin, Package2, AlertCircle, Plus, BarChart3, Grid3x3, Search, Tag } from 'lucide-react'
 import Link from 'next/link'
+import { WarehouseMap } from '@/components/warehouse-map'
 
 export default function LocationsPage() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -77,12 +79,32 @@ export default function LocationsPage() {
             Manage warehouse locations, aisles, and storage capacity
           </p>
         </div>
-        <Link href="/locations/configure">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Configure Locations
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/locations/search">
+            <Button variant="outline">
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
+          </Link>
+          <Link href="/locations/labels">
+            <Button variant="outline">
+              <Tag className="h-4 w-4 mr-2" />
+              Labels
+            </Button>
+          </Link>
+          <Link href="/locations/bulk-create">
+            <Button variant="outline">
+              <Grid3x3 className="h-4 w-4 mr-2" />
+              Bulk Create
+            </Button>
+          </Link>
+          <Link href="/locations/configure">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Configure Locations
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -152,6 +174,7 @@ export default function LocationsPage() {
           <TabsTrigger value="overview">Warehouse Overview</TabsTrigger>
           <TabsTrigger value="aisles">Aisles</TabsTrigger>
           <TabsTrigger value="map">Location Map</TabsTrigger>
+          <TabsTrigger value="zones">Zones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -224,20 +247,49 @@ export default function LocationsPage() {
         </TabsContent>
 
         <TabsContent value="map" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Warehouse Map</CardTitle>
-              <CardDescription>
-                Visual representation of warehouse layout
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-center py-12 text-muted-foreground">
+          {warehouses.length > 0 ? (
+            <div className="space-y-6">
+              {warehouses.map((warehouse) => (
+                <Card key={warehouse.id}>
+                  <CardHeader>
+                    <CardTitle>{warehouse.name} Layout</CardTitle>
+                    <CardDescription>
+                      Visual representation of aisle layout and occupancy
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <WarehouseMap warehouseId={warehouse.id} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12 text-muted-foreground">
                 <div className="text-center">
                   <MapPin className="h-12 w-12 mx-auto mb-4" />
-                  <p>Interactive warehouse map coming soon</p>
+                  <p>No warehouses configured</p>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="zones" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Zone Management</CardTitle>
+              <CardDescription>
+                View and manage warehouse zones across all locations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <Link href="/locations/zones">
+                <Button>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Open Zone Management
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -288,7 +340,34 @@ function AislesList() {
   }
 
   if (isLoading) {
-    return <div>Loading aisles...</div>
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <Package2 className="h-8 w-8 animate-pulse text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Loading aisles...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (aisles.length === 0) {
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium mb-2">No Aisles Found</h3>
+          <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">
+            Start by configuring aisles in your warehouses to organize storage locations.
+          </p>
+          <Link href="/locations/configure">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Configure Aisles
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -300,16 +379,25 @@ function AislesList() {
           : 0
 
         return (
-          <Card key={aisle.id}>
+          <Card key={aisle.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Aisle {aisle.code}</CardTitle>
-                <Badge variant={occupancyRate > 80 ? "destructive" : "default"}>
+                <CardTitle className="flex items-center gap-2">
+                  <Package2 className="h-5 w-5" />
+                  Aisle {aisle.code}
+                </CardTitle>
+                <Badge 
+                  variant={
+                    occupancyRate >= 90 ? "destructive" : 
+                    occupancyRate >= 75 ? "secondary" : 
+                    "default"
+                  }
+                >
                   {occupancyRate}% Full
                 </Badge>
               </div>
               <CardDescription>
-                {aisle.warehouse?.name} • {aisle.name || 'No description'}
+                {aisle.warehouse?.name} • {aisle.name || aisle.description || 'Standard aisle'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -327,10 +415,26 @@ function AislesList() {
                   <span className="font-medium text-orange-600">{stats.occupiedSlots}</span>
                 </div>
               </div>
-              <div className="mt-4">
-                <Link href={`/locations/aisle/${aisle.id}`}>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-3 mb-4">
+                <div 
+                  className={`h-2 rounded-full transition-all ${
+                    occupancyRate >= 90 ? 'bg-red-600' :
+                    occupancyRate >= 75 ? 'bg-orange-600' :
+                    occupancyRate >= 50 ? 'bg-yellow-600' :
+                    'bg-green-600'
+                  }`}
+                  style={{ width: `${occupancyRate}%` }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Link href={`/locations/aisle/${aisle.id}`} className="flex-1">
                   <Button variant="outline" size="sm" className="w-full">
                     View Details
+                  </Button>
+                </Link>
+                <Link href={`/locations/aisle/${aisle.id}/configure`} className="flex-1">
+                  <Button variant="outline" size="sm" className="w-full">
+                    Configure
                   </Button>
                 </Link>
               </div>
@@ -341,6 +445,3 @@ function AislesList() {
     </div>
   )
 }
-
-// Add missing Badge import
-import { Badge } from '@/components/ui/badge'
