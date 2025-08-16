@@ -24,6 +24,9 @@ interface LabelTemplatesProps {
   currentSize: LabelSize
 }
 
+// Type helper to properly distribute Omit across union types
+type OmitId<T> = T extends any ? Omit<T, 'id'> : never
+
 interface Template {
   id: string
   name: string
@@ -31,7 +34,7 @@ interface Template {
   category: 'location' | 'product' | 'shipping' | 'pallet'
   size: LabelSize
   thumbnail: React.ReactNode
-  elements: Omit<LabelElement, 'id'>[]
+  elements: OmitId<LabelElement>[]
 }
 
 const templates: Template[] = [
@@ -435,7 +438,10 @@ export function LabelTemplates({ onSelectTemplate, currentSize }: LabelTemplates
                   <Card 
                     key={template.id}
                     className="cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => onSelectTemplate(template.elements, template.size)}
+                    onClick={() => onSelectTemplate(
+                      template.elements.map(el => ({ ...el, id: generateElementId() } as LabelElement)),
+                      template.size
+                    )}
                   >
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -457,7 +463,10 @@ export function LabelTemplates({ onSelectTemplate, currentSize }: LabelTemplates
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onSelectTemplate(template.elements, template.size)
+                          onSelectTemplate(
+                            template.elements.map(el => ({ ...el, id: generateElementId() } as LabelElement)),
+                            template.size
+                          )
                         }}
                       >
                         Use Template

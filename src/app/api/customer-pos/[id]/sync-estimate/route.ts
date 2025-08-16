@@ -4,9 +4,10 @@ import { isTokenExpired, refreshAccessToken, getQBBaseUrl } from '@/lib/quickboo
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const supabase = await createClient()
     
     // Verify user is authenticated
@@ -26,7 +27,7 @@ export async function POST(
           product:products(*)
         )
       `)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (poError || !po) {
@@ -189,7 +190,7 @@ export async function POST(
         qb_customer_id: po.customer.qb_customer_id,
         updated_by: user.id
       })
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
 
     if (updateError) {
       console.error('Error updating PO with QB info:', updateError)

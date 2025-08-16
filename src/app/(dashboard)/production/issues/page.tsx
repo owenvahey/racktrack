@@ -41,11 +41,26 @@ import {
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 
+interface IssueWithRelations extends Omit<ProductionIssue, 'job_route'> {
+  job_route?: {
+    id: string
+    sequence_number: number
+    activity: {
+      name: string
+      code: string
+    }
+    job: {
+      job_number: string
+      job_name: string
+    }
+  }
+}
+
 export default function ProductionIssuesPage() {
   const router = useRouter()
   const supabase = createClient()
   
-  const [issues, setIssues] = useState<ProductionIssue[]>([])
+  const [issues, setIssues] = useState<IssueWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
@@ -111,7 +126,7 @@ export default function ProductionIssuesPage() {
     }
   }
 
-  function calculateStats(issueData: ProductionIssue[]) {
+  function calculateStats(issueData: IssueWithRelations[]) {
     const stats = {
       totalIssues: issueData.length,
       openIssues: issueData.filter(i => i.status === 'open' || i.status === 'investigating').length,

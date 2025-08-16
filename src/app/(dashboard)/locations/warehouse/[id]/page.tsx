@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Warehouse,
@@ -66,10 +66,10 @@ interface ZoneStats {
   occupancy_rate: number
 }
 
-export default function WarehouseDetailPage({ params }: { params: { id: string } }) {
+export default function WarehouseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
+  const resolvedParams = use(params)
   const [warehouse, setWarehouse] = useState<WarehouseData | null>(null)
   const [aisleStats, setAisleStats] = useState<AisleStats[]>([])
   const [zoneStats, setZoneStats] = useState<ZoneStats[]>([])
@@ -90,7 +90,7 @@ export default function WarehouseDetailPage({ params }: { params: { id: string }
 
   useEffect(() => {
     fetchWarehouseData()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   async function fetchWarehouseData() {
     try {
@@ -98,7 +98,7 @@ export default function WarehouseDetailPage({ params }: { params: { id: string }
       const { data: warehouseData, error: warehouseError } = await supabase
         .from('warehouses')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', resolvedParams.id)
         .single()
 
       if (warehouseError) throw warehouseError
@@ -123,7 +123,7 @@ export default function WarehouseDetailPage({ params }: { params: { id: string }
             )
           )
         `)
-        .eq('warehouse_id', params.id)
+        .eq('warehouse_id', resolvedParams.id)
         .eq('is_active', true)
         .order('code')
 
@@ -204,11 +204,7 @@ export default function WarehouseDetailPage({ params }: { params: { id: string }
 
     } catch (error) {
       console.error('Error fetching warehouse data:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch warehouse details',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch warehouse details')
     } finally {
       setLoading(false)
     }
@@ -580,7 +576,7 @@ export default function WarehouseDetailPage({ params }: { params: { id: string }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <WarehouseMap warehouseId={params.id} />
+              <WarehouseMap warehouseId={resolvedParams.id} />
             </CardContent>
           </Card>
         </TabsContent>

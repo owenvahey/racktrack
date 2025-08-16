@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Edit,
@@ -110,10 +110,10 @@ const statusConfig: { [key: string]: { label: string; variant: 'default' | 'seco
   cancelled: { label: 'Cancelled', variant: 'destructive', icon: XCircle }
 }
 
-export default function CustomerPODetailPage({ params }: { params: { id: string } }) {
+export default function CustomerPODetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
+  const resolvedParams = use(params)
   const [po, setPO] = useState<CustomerPO | null>(null)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
@@ -121,17 +121,15 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
 
   useEffect(() => {
     fetchPO()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   async function fetchPO() {
     try {
-      const response = await fetch(`/api/customer-pos/${params.id}`)
+      const response = await fetch(`/api/customer-pos/${resolvedParams.id}`)
       if (!response.ok) {
         if (response.status === 404) {
-          toast({
-            title: 'Not Found',
+          toast.error('Not Found', {
             description: 'Customer PO not found',
-            variant: 'destructive',
           })
           router.push('/customer-pos')
           return
@@ -143,10 +141,8 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
       setPO(data)
     } catch (error) {
       console.error('Error fetching PO:', error)
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to fetch customer PO',
-        variant: 'destructive',
       })
     } finally {
       setLoading(false)
@@ -156,7 +152,7 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
   async function syncToQuickBooks() {
     setSyncing(true)
     try {
-      const response = await fetch(`/api/customer-pos/${params.id}/sync-estimate`, {
+      const response = await fetch(`/api/customer-pos/${resolvedParams.id}/sync-estimate`, {
         method: 'POST'
       })
 
@@ -168,15 +164,12 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
       const result = await response.json()
       await fetchPO()
       
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: result.message,
       })
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to sync with QuickBooks',
-        variant: 'destructive',
       })
     } finally {
       setSyncing(false)
@@ -186,7 +179,7 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
   async function updateStatus(newStatus: string, reason?: string) {
     setUpdatingStatus(true)
     try {
-      const response = await fetch(`/api/customer-pos/${params.id}/status`, {
+      const response = await fetch(`/api/customer-pos/${resolvedParams.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, reason })
@@ -198,15 +191,12 @@ export default function CustomerPODetailPage({ params }: { params: { id: string 
       }
 
       await fetchPO()
-      toast({
-        title: 'Status Updated',
+      toast.success('Status Updated', {
         description: `PO status changed to ${statusConfig[newStatus].label}`,
       })
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: error instanceof Error ? error.message : 'Failed to update status',
-        variant: 'destructive',
       })
     } finally {
       setUpdatingStatus(false)

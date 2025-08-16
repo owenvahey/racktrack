@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Plus,
@@ -72,7 +72,6 @@ interface POItem {
 
 export default function NewCustomerPOPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -158,19 +157,15 @@ export default function NewCustomerPOPage() {
 
   async function handleSave(sendForApproval = false) {
     if (!customerId) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please select a customer',
-        variant: 'destructive',
       })
       return
     }
 
     if (items.length === 0) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Please add at least one item',
-        variant: 'destructive',
       })
       return
     }
@@ -213,17 +208,14 @@ export default function NewCustomerPOPage() {
         await syncToQuickBooks(newPO.id)
       }
 
-      toast({
-        title: 'Success',
+      toast.success('Success', {
         description: `PO ${newPO.po_number} created successfully`,
       })
 
       router.push(`/customer-pos/${newPO.id}`)
     } catch (error) {
-      toast({
-        title: 'Error',
+      toast.error('Error', {
         description: 'Failed to create PO',
-        variant: 'destructive',
       })
     } finally {
       setSaving(false)

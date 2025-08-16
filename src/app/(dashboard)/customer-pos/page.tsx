@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   Plus,
   Search,
@@ -79,7 +79,6 @@ const statusConfig: { [key: string]: { label: string; variant: 'default' | 'seco
 
 export default function CustomerPOsPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
   const [pos, setPOs] = useState<CustomerPO[]>([])
   const [loading, setLoading] = useState(true)
@@ -104,11 +103,7 @@ export default function CustomerPOsPage() {
       setPOs(data)
     } catch (error) {
       console.error('Error fetching POs:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch customer POs',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch customer POs')
     } finally {
       setLoading(false)
     }
@@ -129,16 +124,9 @@ export default function CustomerPOsPage() {
       }
 
       await fetchPOs()
-      toast({
-        title: 'Status Updated',
-        description: `PO status changed to ${statusConfig[newStatus].label}`,
-      })
+      toast.success(`PO status changed to ${statusConfig[newStatus].label}`)
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to update status',
-        variant: 'destructive',
-      })
+      toast.error(error instanceof Error ? error.message : 'Failed to update status')
     } finally {
       setUpdatingStatus(null)
     }

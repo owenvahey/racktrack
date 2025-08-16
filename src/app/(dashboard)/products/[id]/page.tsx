@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Edit,
@@ -101,10 +101,10 @@ const productTypeConfig = {
   packaging: { label: 'Packaging', icon: Archive, color: 'bg-yellow-500' }
 }
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
+  const resolvedParams = use(params)
   const [product, setProduct] = useState<Product | null>(null)
   const [movements, setMovements] = useState<InventoryMovement[]>([])
   const [boms, setBOMs] = useState<ProductBOM[]>([])
@@ -114,7 +114,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     fetchProductData()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   async function fetchProductData() {
     try {
@@ -122,7 +122,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
       const { data: productData, error: productError } = await supabase
         .from('products')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', resolvedParams.id)
         .single()
 
       if (productError) throw productError
@@ -137,7 +137,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
           to_location:to_location_id(full_location),
           user:created_by(full_name)
         `)
-        .eq('product_id', params.id)
+        .eq('product_id', resolvedParams.id)
         .order('created_at', { ascending: false })
         .limit(20)
 
@@ -162,7 +162,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             )
           )
         `)
-        .eq('product_id', params.id)
+        .eq('product_id', resolvedParams.id)
         .order('version_number', { ascending: false })
 
       setBOMs(bomsData || [])
@@ -177,7 +177,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
             location:location_id(full_location)
           )
         `)
-        .eq('product_id', params.id)
+        .eq('product_id', resolvedParams.id)
         .gt('total_units', 0)
 
       // Aggregate by location
@@ -200,11 +200,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
     } catch (error) {
       console.error('Error fetching product data:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch product details',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch product details')
     } finally {
       setLoading(false)
     }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,7 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Grid3x3,
@@ -96,10 +96,10 @@ interface SlotDetails {
   shelf: Shelf
 }
 
-export default function AisleDetailPage({ params }: { params: { id: string } }) {
+export default function AisleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
+  const resolvedParams = use(params)
   const [aisle, setAisle] = useState<AisleData | null>(null)
   const [shelves, setShelves] = useState<Shelf[]>([])
   const [loading, setLoading] = useState(true)
@@ -122,7 +122,7 @@ export default function AisleDetailPage({ params }: { params: { id: string } }) 
 
   useEffect(() => {
     fetchAisleData()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   async function fetchAisleData() {
     try {
@@ -133,7 +133,7 @@ export default function AisleDetailPage({ params }: { params: { id: string } }) 
           *,
           warehouse:warehouses(id, name, code)
         `)
-        .eq('id', params.id)
+        .eq('id', resolvedParams.id)
         .single()
 
       if (aisleError) throw aisleError
@@ -156,7 +156,7 @@ export default function AisleDetailPage({ params }: { params: { id: string } }) 
             )
           )
         `)
-        .eq('aisle_id', params.id)
+        .eq('aisle_id', resolvedParams.id)
         .eq('is_active', true)
         .order('level_number')
 
@@ -193,11 +193,7 @@ export default function AisleDetailPage({ params }: { params: { id: string } }) 
 
     } catch (error) {
       console.error('Error fetching aisle data:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch aisle details',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch aisle details')
     } finally {
       setLoading(false)
     }
@@ -236,19 +232,12 @@ export default function AisleDetailPage({ params }: { params: { id: string } }) 
 
       if (error) throw error
 
-      toast({
-        title: 'Success',
-        description: `Slot marked as ${selectedSlot.slot.is_occupied ? 'available' : 'occupied'}`,
-      })
+      toast.success(`Slot marked as ${selectedSlot.slot.is_occupied ? 'available' : 'occupied'}`)
 
       setShowSlotDialog(false)
       fetchAisleData()
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update slot status',
-        variant: 'destructive',
-      })
+      toast.error('Failed to update slot status')
     }
   }
 

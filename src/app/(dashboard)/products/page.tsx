@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   Plus,
   Search,
@@ -74,7 +74,6 @@ const productTypeConfig = {
 
 export default function ProductsPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -153,11 +152,7 @@ export default function ProductsPage() {
 
     } catch (error) {
       console.error('Error fetching products:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch products',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch products')
     } finally {
       setLoading(false)
     }
@@ -173,16 +168,9 @@ export default function ProductsPage() {
       if (error) throw error
 
       await fetchProducts()
-      toast({
-        title: 'Success',
-        description: `Product ${currentStatus ? 'archived' : 'activated'} successfully`,
-      })
+      toast.success(`Product ${currentStatus ? 'archived' : 'activated'} successfully`)
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update product status',
-        variant: 'destructive',
-      })
+      toast.error('Failed to update product status')
     }
   }
 

@@ -76,7 +76,7 @@ export function LabelPreview({ size, elements, onPrint }: LabelPreviewProps) {
   const [printDpi, setPrintDpi] = useState(203)
 
   const handlePrint = useReactToPrint({
-    content: () => printRef.current,
+    contentRef: printRef,
     documentTitle: `Label-${Date.now()}`,
     onAfterPrint: onPrint,
     pageStyle: `
@@ -94,13 +94,13 @@ export function LabelPreview({ size, elements, onPrint }: LabelPreviewProps) {
   })
 
   const renderElement = (element: LabelElement, scale: number = 1) => {
-    const processedElement = { ...element }
+    let processedElement = { ...element } as LabelElement
     
     // Replace data fields for text elements
     if (element.type === 'text' && element.isVariable && element.dataField) {
-      processedElement.content = replaceDataFields(`{{${element.dataField}}}`, SAMPLE_DATA)
-    } else if (element.type === 'text' && element.content.includes('{{')) {
-      processedElement.content = replaceDataFields(element.content, SAMPLE_DATA)
+      processedElement = { ...element, content: replaceDataFields(`{{${element.dataField}}}`, SAMPLE_DATA) }
+    } else if (element.type === 'text' && 'content' in element && element.content.includes('{{')) {
+      processedElement = { ...element, content: replaceDataFields(element.content, SAMPLE_DATA) }
     }
     
     // Replace data fields for barcodes and QR codes
@@ -112,7 +112,7 @@ export function LabelPreview({ size, elements, onPrint }: LabelPreviewProps) {
         if (value === undefined) break
       }
       if (value !== undefined) {
-        processedElement.value = String(value).replace(/[^a-zA-Z0-9]/g, '')
+        processedElement = { ...element, value: String(value).replace(/[^a-zA-Z0-9]/g, '') }
       }
     }
 
@@ -200,68 +200,75 @@ export function LabelPreview({ size, elements, onPrint }: LabelPreviewProps) {
         )
 
       case 'shape':
-        if (processedElement.shapeType === 'circle') {
+        if (element.type === 'shape' && element.shapeType === 'circle') {
           return (
             <svg style={scaledStyle}>
               <circle
                 cx={(element.width * scale) / 2}
                 cy={(element.height * scale) / 2}
                 r={Math.min(element.width, element.height) * scale / 2 - (element.strokeWidth || 0) * scale / 2}
-                fill={processedElement.fill || 'transparent'}
-                stroke={processedElement.stroke}
-                strokeWidth={(processedElement.strokeWidth || 1) * scale}
+                fill={element.fill || 'transparent'}
+                stroke={element.stroke}
+                strokeWidth={(element.strokeWidth || 1) * scale}
               />
             </svg>
           )
-        } else {
+        } else if (element.type === 'shape') {
           return (
             <div
               style={{
                 ...scaledStyle,
-                backgroundColor: processedElement.fill || 'transparent',
-                border: `${(processedElement.strokeWidth || 1) * scale}px solid ${processedElement.stroke || '#000'}`,
-                borderRadius: processedElement.shapeType === 'rounded-rectangle' 
-                  ? (processedElement.cornerRadius || 5) * scale 
+                backgroundColor: element.fill || 'transparent',
+                border: `${(element.strokeWidth || 1) * scale}px solid ${element.stroke || '#000'}`,
+                borderRadius: element.shapeType === 'rounded-rectangle' 
+                  ? (element.cornerRadius || 5) * scale 
                   : 0,
               }}
             />
           )
         }
+        break
 
       case 'line':
-        return (
-          <svg
-            style={{
-              position: 'absolute',
-              left: Math.min(element.x, element.x2) * scale,
-              top: Math.min(element.y, element.y2) * scale,
-              width: Math.abs(element.x2 - element.x) * scale,
-              height: Math.abs(element.y2 - element.y) * scale,
-              pointerEvents: 'none',
-            }}
-          >
-            <line
-              x1={element.x < element.x2 ? 0 : Math.abs(element.x2 - element.x) * scale}
-              y1={element.y < element.y2 ? 0 : Math.abs(element.y2 - element.y) * scale}
-              x2={element.x2 > element.x ? Math.abs(element.x2 - element.x) * scale : 0}
-              y2={element.y2 > element.y ? Math.abs(element.y2 - element.y) * scale : 0}
-              stroke={processedElement.stroke}
-              strokeWidth={(processedElement.strokeWidth || 1) * scale}
-            />
-          </svg>
-        )
+        if (element.type === 'line') {
+          return (
+            <svg
+              style={{
+                position: 'absolute',
+                left: Math.min(element.x, element.x2) * scale,
+                top: Math.min(element.y, element.y2) * scale,
+                width: Math.abs(element.x2 - element.x) * scale,
+                height: Math.abs(element.y2 - element.y) * scale,
+                pointerEvents: 'none',
+              }}
+            >
+              <line
+                x1={element.x < element.x2 ? 0 : Math.abs(element.x2 - element.x) * scale}
+                y1={element.y < element.y2 ? 0 : Math.abs(element.y2 - element.y) * scale}
+                x2={element.x2 > element.x ? Math.abs(element.x2 - element.x) * scale : 0}
+                y2={element.y2 > element.y ? Math.abs(element.y2 - element.y) * scale : 0}
+                stroke={element.stroke}
+                strokeWidth={(element.strokeWidth || 1) * scale}
+              />
+            </svg>
+          )
+        }
+        break
 
       case 'image':
-        return (
-          <img
-            src={processedElement.src}
-            alt=""
-            style={{
-              ...scaledStyle,
-              objectFit: processedElement.objectFit,
-            }}
-          />
-        )
+        if (element.type === 'image') {
+          return (
+            <img
+              src={element.src}
+              alt=""
+              style={{
+                ...scaledStyle,
+                objectFit: element.objectFit,
+              }}
+            />
+          )
+        }
+        break
 
       default:
         return null

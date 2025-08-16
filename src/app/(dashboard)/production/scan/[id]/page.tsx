@@ -370,7 +370,7 @@ export default function ProductionScanPage() {
             </p>
           </div>
         </div>
-        <Badge className={statusColors[routeDetails.status]}>
+        <Badge className={statusColors[routeDetails.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}>
           {routeDetails.status.replace('_', ' ')}
         </Badge>
       </div>

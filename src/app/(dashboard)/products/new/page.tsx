@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Save,
@@ -41,7 +41,6 @@ const unitsOfMeasure = [
 
 export default function NewProductPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
   const [loading, setLoading] = useState(false)
   
@@ -73,11 +72,7 @@ export default function NewProductPage() {
     
     // Validation
     if (!formData.sku || !formData.name) {
-      toast({
-        title: 'Error',
-        description: 'SKU and name are required',
-        variant: 'destructive',
-      })
+      toast.error('SKU and name are required')
       return
     }
 
@@ -91,11 +86,7 @@ export default function NewProductPage() {
         .single()
 
       if (existing) {
-        toast({
-          title: 'Error',
-          description: 'A product with this SKU already exists',
-          variant: 'destructive',
-        })
+        toast.error('A product with this SKU already exists')
         return
       }
 
@@ -124,10 +115,7 @@ export default function NewProductPage() {
 
       if (error) throw error
 
-      toast({
-        title: 'Success',
-        description: 'Product created successfully',
-      })
+      toast.success('Product created successfully')
 
       // Redirect to product details or BOM page
       if (formData.product_type === 'finished_good') {
@@ -137,11 +125,7 @@ export default function NewProductPage() {
       }
     } catch (error) {
       console.error('Error creating product:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to create product',
-        variant: 'destructive',
-      })
+      toast.error('Failed to create product')
     } finally {
       setLoading(false)
     }

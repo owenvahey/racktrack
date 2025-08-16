@@ -49,7 +49,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 
-interface IssueDetails extends ProductionIssue {
+interface IssueDetails extends Omit<ProductionIssue, 'job_route' | 'work_center' | 'material_product' | 'reporter' | 'resolver' | 'operator'> {
   job_route?: {
     id: string
     sequence_number: number

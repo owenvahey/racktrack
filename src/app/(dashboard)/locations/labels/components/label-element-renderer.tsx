@@ -133,7 +133,7 @@ export function LabelElementRenderer({
                   padding: '8px',
                 }}
               >
-                QR: {{`{{${element.dataField}}}`}}
+                QR: {`{{${element.dataField}}}`}
               </div>
             ) : (
               <QRCode

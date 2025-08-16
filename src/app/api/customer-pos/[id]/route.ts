@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const supabase = await createClient()
     
     // Verify user is authenticated
@@ -30,7 +31,7 @@ export async function GET(
         created_by_user:profiles!customer_pos_created_by_fkey(name),
         updated_by_user:profiles!customer_pos_updated_by_fkey(name)
       `)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (error) {
@@ -52,9 +53,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const supabase = await createClient()
     
     // Verify user is authenticated
@@ -73,7 +75,7 @@ export async function PATCH(
         ...poData,
         updated_by: user.id
       })
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .select()
       .single()
 
@@ -87,13 +89,13 @@ export async function PATCH(
       await supabase
         .from('customer_po_items')
         .delete()
-        .eq('po_id', params.id)
+        .eq('po_id', resolvedParams.id)
 
       // Insert new items
       if (items.length > 0) {
         const poItems = items.map((item: any, index: number) => ({
           ...item,
-          po_id: params.id,
+          po_id: resolvedParams.id,
           line_number: index + 1
         }))
 
@@ -118,7 +120,7 @@ export async function PATCH(
           product:products(*)
         )
       `)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     return NextResponse.json(updatedPO)
@@ -133,9 +135,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const supabase = await createClient()
     
     // Verify user is authenticated
@@ -159,7 +162,7 @@ export async function DELETE(
     const { data: po } = await supabase
       .from('customer_pos')
       .select('production_status')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (po && ['in_production', 'invoiced'].includes(po.production_status)) {
@@ -172,7 +175,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('customer_pos')
       .delete()
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

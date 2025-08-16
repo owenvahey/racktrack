@@ -17,9 +17,10 @@ const VALID_TRANSITIONS: { [key: string]: string[] } = {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params
     const supabase = await createClient()
     
     // Verify user is authenticated
@@ -38,7 +39,7 @@ export async function PATCH(
     const { data: currentPO, error: fetchError } = await supabase
       .from('customer_pos')
       .select('production_status')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (fetchError || !currentPO) {
@@ -78,7 +79,7 @@ export async function PATCH(
     const { data: updatedPO, error: updateError } = await supabase
       .from('customer_pos')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .select(`
         *,
         customer:customers(name, company_name)

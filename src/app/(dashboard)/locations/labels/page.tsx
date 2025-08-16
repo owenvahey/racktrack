@@ -56,7 +56,7 @@ export default function LabelGeneratorPage() {
   // Update element
   const updateElement = (id: string, updates: Partial<LabelElement>) => {
     setElements(elements.map(el => 
-      el.id === id ? { ...el, ...updates } : el
+      el.id === id ? { ...el, ...updates } as LabelElement : el
     ))
   }
 

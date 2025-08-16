@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,7 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   ArrowLeft,
   Plus,
@@ -50,6 +50,7 @@ interface Product {
   sku: string
   name: string
   product_type: string
+  unit_of_measure?: string
 }
 
 interface Material {
@@ -95,10 +96,10 @@ const statusConfig = {
   obsolete: { label: 'Obsolete', color: 'bg-red-500' }
 }
 
-export default function BOMManagementPage({ params }: { params: { id: string } }) {
+export default function BOMManagementPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { toast } = useToast()
   const supabase = createClient()
+  const resolvedParams = use(params)
   const [product, setProduct] = useState<Product | null>(null)
   const [boms, setBOMs] = useState<BOM[]>([])
   const [loading, setLoading] = useState(true)
@@ -120,7 +121,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     fetchData()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   async function fetchData() {
     try {
@@ -128,15 +129,11 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
       const { data: productData } = await supabase
         .from('products')
         .select('*')
-        .eq('id', params.id)
+        .eq('id', resolvedParams.id)
         .single()
 
       if (!productData || productData.product_type !== 'finished_good') {
-        toast({
-          title: 'Error',
-          description: 'BOMs can only be created for finished goods',
-          variant: 'destructive',
-        })
+        toast.error('BOMs can only be created for finished goods')
         router.push('/products')
         return
       }
@@ -161,7 +158,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
             )
           )
         `)
-        .eq('product_id', params.id)
+        .eq('product_id', resolvedParams.id)
         .order('version_number', { ascending: false })
 
       setBOMs(bomsData || [])
@@ -190,11 +187,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
     } catch (error) {
       console.error('Error fetching data:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch BOM data',
-        variant: 'destructive',
-      })
+      toast.error('Failed to fetch BOM data')
     } finally {
       setLoading(false)
     }
@@ -222,7 +215,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
             const material = availableMaterials.find(p => p.id === value)
             if (material) {
               updated.product = material
-              updated.unit_of_measure = material.unit_of_measure
+              updated.unit_of_measure = material.unit_of_measure || ''
             }
           }
           return updated
@@ -284,11 +277,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
     // Validation
     if (bomForm.materials.length === 0) {
-      toast({
-        title: 'Error',
-        description: 'At least one material is required',
-        variant: 'destructive',
-      })
+      toast.error('At least one material is required')
       return
     }
 
@@ -380,10 +369,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
         if (actError) throw actError
       }
 
-      toast({
-        title: 'Success',
-        description: `BOM version ${nextVersion} ${editingBOM ? 'updated' : 'created'} successfully`,
-      })
+      toast.success(`BOM version ${nextVersion} ${editingBOM ? 'updated' : 'created'} successfully`)
 
       // Reset form and refresh
       setShowNewBOM(false)
@@ -398,11 +384,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
     } catch (error) {
       console.error('Error saving BOM:', error)
-      toast({
-        title: 'Error',
-        description: 'Failed to save BOM',
-        variant: 'destructive',
-      })
+      toast.error('Failed to save BOM')
     } finally {
       setSaving(false)
     }
@@ -426,17 +408,10 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
       if (error) throw error
 
-      toast({
-        title: 'Success',
-        description: 'BOM status updated',
-      })
+      toast.success('BOM status updated')
       fetchData()
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update BOM status',
-        variant: 'destructive',
-      })
+      toast.error('Failed to update BOM status')
     }
   }
 
@@ -446,7 +421,7 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
       await supabase
         .from('product_boms')
         .update({ is_default: false })
-        .eq('product_id', params.id)
+        .eq('product_id', resolvedParams.id)
 
       // Set new default
       const { error } = await supabase
@@ -456,17 +431,10 @@ export default function BOMManagementPage({ params }: { params: { id: string } }
 
       if (error) throw error
 
-      toast({
-        title: 'Success',
-        description: 'Default BOM updated',
-      })
+      toast.success('Default BOM updated')
       fetchData()
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to set default BOM',
-        variant: 'destructive',
-      })
+      toast.error('Failed to set default BOM')
     }
   }
 

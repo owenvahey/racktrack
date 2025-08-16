@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { 
   Users, 
   Package, 
@@ -34,7 +34,6 @@ interface SyncItem {
 
 export default function QuickBooksSyncPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [syncing, setSyncing] = useState<string | null>(null)
   const [syncProgress, setSyncProgress] = useState<{ [key: string]: number }>({})
   const [syncResults, setSyncResults] = useState<{ [key: string]: any }>({})
@@ -108,8 +107,7 @@ export default function QuickBooksSyncPage() {
         }
       }))
       
-      toast({
-        title: `${item.name} synced successfully`,
+      toast.success(`${item.name} synced successfully`, {
         description: data.message || `Synced ${data.synced} items`,
       })
     } catch (error) {
@@ -121,10 +119,8 @@ export default function QuickBooksSyncPage() {
         }
       }))
       
-      toast({
-        title: 'Sync failed',
+      toast.error('Sync failed', {
         description: error instanceof Error ? error.message : 'Unknown error',
-        variant: 'destructive',
       })
     } finally {
       setSyncing(null)

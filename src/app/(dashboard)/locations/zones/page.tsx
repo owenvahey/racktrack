@@ -142,10 +142,10 @@ export default function ZonesPage() {
       // Process data into zone statistics
       const statsMap = new Map<string, ZoneStats>()
 
-      data?.forEach(slot => {
+      data?.forEach((slot: any) => {
         const zone = slot.zone || 'storage'
-        const warehouseId = slot.shelf.aisle.warehouse_id
-        const warehouseName = slot.shelf.aisle.warehouse.name
+        const warehouseId = slot.shelf?.aisle?.warehouse_id
+        const warehouseName = slot.shelf?.aisle?.warehouse?.name
         const key = `${warehouseId}-${zone}`
 
         if (!statsMap.has(key)) {
