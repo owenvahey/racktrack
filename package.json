@@ -69,6 +69,7 @@
     "@types/qrcode.react": "^1.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint-config-next": "^15.4.6",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14",

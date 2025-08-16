@@ -8,14 +8,17 @@ export function createClient() {
     {
       cookies: {
         get(name: string) {
+          if (typeof document === 'undefined') return undefined
           const cookieStore = document.cookie.split('; ')
           const cookie = cookieStore.find(row => row.startsWith(`${name}=`))
           return cookie ? decodeURIComponent(cookie.split('=')[1]) : undefined
         },
         set(name: string, value: string, options?: any) {
+          if (typeof document === 'undefined') return
           document.cookie = `${name}=${encodeURIComponent(value)}; path=/; ${options?.maxAge ? `max-age=${options.maxAge};` : ''}`
         },
         remove(name: string) {
+          if (typeof document === 'undefined') return
           document.cookie = `${name}=; path=/; max-age=0`
         },
       },
