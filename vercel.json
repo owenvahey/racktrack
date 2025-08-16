@@ -2,5 +2,11 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "crons": [
+    {
+      "path": "/api/quickbooks/refresh-token",
+      "schedule": "*/30 * * * *"
+    }
+  ]
 }

@@ -55,9 +55,11 @@ interface Product {
 
 interface Material {
   id?: string
-  material_id: string
+  material_id?: string
+  material_product_id?: string
   product?: Product
-  quantity: number
+  quantity?: number
+  quantity_required?: number
   unit_of_measure: string
   notes?: string
 }
@@ -65,15 +67,24 @@ interface Material {
 interface Activity {
   id?: string
   activity_id: string
+  work_center_id?: string
   activity?: {
     id: string
     name: string
-    work_center: { name: string }
+    code: string
+    activity_type: string
+  }
+  work_center?: {
+    id: string
+    name: string
   }
   sequence_number: number
-  duration_minutes: number
+  duration_minutes?: number
+  run_time_per_unit?: number
   setup_minutes?: number
+  setup_time_minutes?: number
   notes?: string
+  instructions?: string
 }
 
 interface BOM {
@@ -145,11 +156,11 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
         .from('product_boms')
         .select(`
           *,
-          materials:product_bom_materials(
+          materials:bom_materials(
             *,
-            product:material_id(id, sku, name)
+            product:material_product_id(id, sku, name)
           ),
-          activities:product_bom_activities(
+          activities:bom_activities(
             *,
             activity:activity_id(
               id,
@@ -175,13 +186,21 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
 
       // Fetch available activities with work centers
       const { data: activitiesData } = await supabase
-        .from('activities')
+        .from('work_center_activities')
         .select(`
-          *,
-          work_center:work_center_id(name)
+          activity:activities!inner(
+            id,
+            code,
+            name,
+            activity_type
+          ),
+          work_center:work_centers!inner(
+            id,
+            name
+          )
         `)
-        .eq('is_active', true)
-        .order('name')
+        .eq('activity.is_active', true)
+        .order('activity.name')
 
       setAvailableActivities(activitiesData || [])
 
@@ -238,6 +257,7 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       ...prev,
       activities: [...prev.activities, {
         activity_id: '',
+        work_center_id: '',
         sequence_number: nextSequence,
         duration_minutes: 0,
         setup_minutes: 0
@@ -251,11 +271,18 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       activities: prev.activities.map((a, i) => {
         if (i === index) {
           const updated = { ...a, [field]: value }
-          // Auto-fill activity details when selected
+          // Auto-fill activity and work center details when selected
           if (field === 'activity_id' && value) {
-            const activity = availableActivities.find(act => act.id === value)
-            if (activity) {
-              updated.activity = activity
+            // Value is in format "activityId:workCenterId"
+            const [activityId, workCenterId] = value.split(':')
+            const wcActivity = availableActivities.find(wca => 
+              wca.activity.id === activityId && wca.work_center.id === workCenterId
+            )
+            if (wcActivity) {
+              updated.activity_id = activityId
+              updated.work_center_id = workCenterId
+              updated.activity = wcActivity.activity
+              updated.work_center = wcActivity.work_center
             }
           }
           return updated
@@ -313,12 +340,12 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
 
         // Delete existing materials and activities
         await supabase
-          .from('product_bom_materials')
+          .from('bom_materials')
           .delete()
           .eq('bom_id', bomId)
 
         await supabase
-          .from('product_bom_activities')
+          .from('bom_activities')
           .delete()
           .eq('bom_id', bomId)
       } else {
@@ -336,15 +363,14 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       // Insert materials
       if (bomForm.materials.length > 0) {
         const { error: matError } = await supabase
-          .from('product_bom_materials')
+          .from('bom_materials')
           .insert(
             bomForm.materials.map((mat, index) => ({
               bom_id: bomId,
-              material_id: mat.material_id,
-              quantity: mat.quantity,
+              material_product_id: mat.material_id,
+              quantity_required: mat.quantity,
               unit_of_measure: mat.unit_of_measure,
-              notes: mat.notes || null,
-              sequence_number: (index + 1) * 10
+              notes: mat.notes || null
             }))
           )
 
@@ -354,15 +380,16 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       // Insert activities
       if (bomForm.activities.length > 0) {
         const { error: actError } = await supabase
-          .from('product_bom_activities')
+          .from('bom_activities')
           .insert(
             bomForm.activities.map(act => ({
               bom_id: bomId,
               activity_id: act.activity_id,
+              work_center_id: act.work_center_id,
               sequence_number: act.sequence_number,
-              duration_minutes: act.duration_minutes,
-              setup_minutes: act.setup_minutes || 0,
-              notes: act.notes || null
+              setup_time_minutes: act.setup_minutes || 0,
+              run_time_per_unit: act.duration_minutes,
+              instructions: act.notes || null
             }))
           )
 
@@ -444,10 +471,21 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       notes: bom.notes || '',
       effective_date: bom.effective_date ? format(new Date(bom.effective_date), 'yyyy-MM-dd') : '',
       materials: bom.materials.map(m => ({
-        ...m,
-        material_id: m.product?.id || ''
+        material_id: m.product?.id || m.material_product_id || '',
+        quantity: m.quantity_required || m.quantity || 0,
+        unit_of_measure: m.unit_of_measure || '',
+        notes: m.notes
       })),
-      activities: bom.activities
+      activities: bom.activities.map(a => ({
+        activity_id: a.activity?.id || a.activity_id || '',
+        work_center_id: a.work_center?.id || a.work_center_id || '',
+        sequence_number: a.sequence_number,
+        duration_minutes: a.run_time_per_unit || a.duration_minutes || 0,
+        setup_minutes: a.setup_time_minutes || a.setup_minutes || 0,
+        notes: a.instructions || a.notes || '',
+        activity: a.activity,
+        work_center: a.work_center
+      }))
     })
     setShowNewBOM(true)
   }
@@ -457,10 +495,21 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
       notes: `Copied from version ${bom.version_number}`,
       effective_date: format(new Date(), 'yyyy-MM-dd'),
       materials: bom.materials.map(m => ({
-        ...m,
-        material_id: m.product?.id || ''
+        material_id: m.product?.id || m.material_product_id || '',
+        quantity: m.quantity_required || m.quantity || 0,
+        unit_of_measure: m.unit_of_measure || '',
+        notes: m.notes
       })),
-      activities: bom.activities
+      activities: bom.activities.map(a => ({
+        activity_id: a.activity?.id || a.activity_id || '',
+        work_center_id: a.work_center?.id || a.work_center_id || '',
+        sequence_number: a.sequence_number,
+        duration_minutes: a.run_time_per_unit || a.duration_minutes || 0,
+        setup_minutes: a.setup_time_minutes || a.setup_minutes || 0,
+        notes: a.instructions || a.notes || '',
+        activity: a.activity,
+        work_center: a.work_center
+      }))
     })
     setShowNewBOM(true)
   }
@@ -664,10 +713,10 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
                               <TableRow key={idx}>
                                 <TableCell>{activity.sequence_number}</TableCell>
                                 <TableCell>{activity.activity?.name || 'Unknown'}</TableCell>
-                                <TableCell>{activity.activity?.work_center?.name || '-'}</TableCell>
-                                <TableCell>{activity.setup_minutes || 0} min</TableCell>
-                                <TableCell>{activity.duration_minutes} min</TableCell>
-                                <TableCell>{activity.notes || '-'}</TableCell>
+                                <TableCell>{activity.work_center?.name || '-'}</TableCell>
+                                <TableCell>{activity.setup_time_minutes || 0} min</TableCell>
+                                <TableCell>{activity.run_time_per_unit || 0} min</TableCell>
+                                <TableCell>{activity.instructions || '-'}</TableCell>
                               </TableRow>
                             ))}
                         </TableBody>
@@ -892,16 +941,16 @@ export default function BOMManagementPage({ params }: { params: Promise<{ id: st
                           <div className="col-span-4">
                             <Label>Activity</Label>
                             <Select
-                              value={activity.activity_id}
+                              value={activity.activity_id && activity.work_center_id ? `${activity.activity_id}:${activity.work_center_id}` : ''}
                               onValueChange={(value) => updateActivity(index, 'activity_id', value)}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select activity" />
                               </SelectTrigger>
                               <SelectContent>
-                                {availableActivities.map(act => (
-                                  <SelectItem key={act.id} value={act.id}>
-                                    {act.name} ({act.work_center.name})
+                                {availableActivities.map((wca, idx) => (
+                                  <SelectItem key={idx} value={`${wca.activity.id}:${wca.work_center.id}`}>
+                                    {wca.activity.name} ({wca.work_center.name})
                                   </SelectItem>
                                 ))}
                               </SelectContent>
